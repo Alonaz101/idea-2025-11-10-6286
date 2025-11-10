@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mood Recipe Recommendation</title>
+    <style>
+        body {font-family: Arial, sans-serif; margin: 20px;}
+        #mood-list button {margin: 5px; padding: 10px; font-size: 1em;}
+        #recipes {margin-top: 20px;}
+        .recipe {border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;}
+    </style>
+</head>
+<body>
+    <h1>Select Your Mood</h1>
+    <div id="mood-list"></div>
+
+    <h2>Recommended Recipes</h2>
+    <div id="recipes"></div>
+
+    <script>
+        async function fetchMoods() {
+            const response = await fetch('/api/moods');
+            return response.json();
+        }
+
+        async function fetchRecommendations(moodId) {
+            const response = await fetch('/api/recommendations', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ mood_id: moodId })
+            });
+            if (!response.ok) {
+                alert('No recipes found for this mood');
+                return [];
+            }
+            return await response.json();
+        }
+
+        function showMoods(moods) {
+            const moodList = document.getElementById('mood-list');
+            moods.forEach(mood => {
+                const btn = document.createElement('button');
+                btn.textContent = mood.name;
+                btn.onclick = async () => {
+                    const recipes = await fetchRecommendations(mood.id);
+                    showRecipes(recipes);
+                };
+                moodList.appendChild(btn);
+            });
+        }
+
+        function showRecipes(recipes) {
+            const container = document.getElementById('recipes');
+            container.innerHTML = '';
+            recipes.forEach(recipe => {
+                const div = document.createElement('div');
+                div.className = 'recipe';
+                div.innerHTML = `<h3>${recipe.name}</h3><strong>Ingredients:</strong> ${recipe.ingredients.join(', ')}<br><strong>Instructions:</strong> ${recipe.instructions}`;
+                container.appendChild(div);
+            });
+        }
+
+        fetchMoods().then(showMoods);
+    </script>
+</body>
+</html>
